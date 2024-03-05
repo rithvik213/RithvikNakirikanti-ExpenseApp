@@ -30,8 +30,10 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun getExpensesByDate(startDate: Long, endDate: Long): LiveData<List<Expense>> {
-        return expenseDao.getExpensesByDate(startDate, endDate)
+    fun getExpensesForDay(date: Long): LiveData<List<Expense>> {
+        val dayStart = date
+        val dayEnd = dayStart + 86_400_000
+        return expenseDao.getExpensesForDay(dayStart, dayEnd)
     }
 
     fun getExpensesByCategory(category: String): LiveData<List<Expense>> {

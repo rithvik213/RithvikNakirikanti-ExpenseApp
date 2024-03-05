@@ -22,6 +22,11 @@ class ExpenseAdapter(private var expenses: List<Expense>, private val onClick: (
 
     override fun getItemCount(): Int = expenses.size
 
+    fun updateData(newExpenses: List<Expense>) {
+        expenses = newExpenses
+        notifyDataSetChanged()
+    }
+
     class ExpenseViewHolder(itemView: View, val onClick: (Expense) -> Unit) : RecyclerView.ViewHolder(itemView) {
         private val dateTextView: TextView = itemView.findViewById(R.id.dateTextView)
         private val amountTextView: TextView = itemView.findViewById(R.id.amountTextView)

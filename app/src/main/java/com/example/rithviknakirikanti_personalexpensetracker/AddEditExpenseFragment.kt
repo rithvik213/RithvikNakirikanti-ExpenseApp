@@ -38,14 +38,12 @@ class AddEditExpenseFragment : Fragment() {
     }
 
     private fun setupCategorySpinner() {
-        // Assuming you have defined your categories array in strings.xml
         val categories = resources.getStringArray(R.array.expense_categories)
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, categories).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
         binding.spinnerCategory.adapter = adapter
 
-        // If editing an expense, set the spinner to show the current category
         currentExpense?.let {
             val categoryPosition = adapter.getPosition(it.category)
             binding.spinnerCategory.setSelection(categoryPosition)
