@@ -24,6 +24,12 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun delete(expense: Expense) {
+        viewModelScope.launch(Dispatchers.IO) {
+            expenseDao.delete(expense)
+        }
+    }
+
     fun getExpensesByDate(startDate: Long, endDate: Long): LiveData<List<Expense>> {
         return expenseDao.getExpensesByDate(startDate, endDate)
     }

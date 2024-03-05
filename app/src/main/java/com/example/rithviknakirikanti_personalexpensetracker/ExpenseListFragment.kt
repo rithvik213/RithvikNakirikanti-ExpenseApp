@@ -8,32 +8,44 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class ExpenseListFragment : Fragment() {
 
     private lateinit var viewModel: ExpenseViewModel
-    private lateinit var expenseAdapter: ExpenseAdapter
     private lateinit var recyclerView: RecyclerView
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_expense_list, container, false)
 
-        // Initialize RecyclerView
         recyclerView = view.findViewById(R.id.recyclerViewExpenses)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        expenseAdapter = ExpenseAdapter(emptyList())
-        recyclerView.adapter = expenseAdapter
 
         viewModel = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)).get(ExpenseViewModel::class.java)
 
         viewModel.allExpenses.observe(viewLifecycleOwner) { expenses ->
-            expenseAdapter.updateData(expenses)
+            recyclerView.adapter = ExpenseAdapter(expenses) { expense ->
+                navigateToAddEditExpenseFragment(expense)
+            }
+        }
+
+        val fabAddExpense: FloatingActionButton = view.findViewById(R.id.fabAddExpense)
+        fabAddExpense.setOnClickListener {
+            navigateToAddEditExpenseFragment()
         }
 
         return view
+    }
+
+    private fun navigateToAddEditExpenseFragment(expense: Expense? = null) {
+        val fragment = AddEditExpenseFragment().apply {
+            arguments = Bundle().apply {
+                putSerializable("expense", expense)
+            }
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 }
