@@ -11,6 +11,7 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -61,61 +62,75 @@ class ExpenseListFragment : Fragment() {
         categorySpinner.adapter = adapter
     }
 
-
     private fun setupFilterListeners() {
         dateEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                filterByDate(s.toString())
+                filterExpenses()
             }
         })
 
         categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                filterByCategory(parent.getItemAtPosition(position).toString())
+                filterExpenses()
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
     }
 
-    private fun filterByDate(dateStr: String) {
-        if (dateStr.isNotEmpty()) {
-            val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.US)
-            try {
-                val date = sdf.parse(dateStr)
-                date?.let {
+    private var currentExpensesLiveData: LiveData<List<Expense>>? = null
+
+
+    private fun filterExpenses() {
+        currentExpensesLiveData?.removeObservers(viewLifecycleOwner)
+
+        val dateStr = dateEditText.text.toString()
+        val category = categorySpinner.selectedItem.toString()
+
+        currentExpensesLiveData = when {
+            dateStr.isNotEmpty() && category != "All" -> {
+                val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+                try {
+                    val date = sdf.parse(dateStr)?.time ?: return
                     val calendar = Calendar.getInstance().apply {
-                        time = it
+                        timeInMillis = date
                         set(Calendar.HOUR_OF_DAY, 0)
                         set(Calendar.MINUTE, 0)
                         set(Calendar.SECOND, 0)
                         set(Calendar.MILLISECOND, 0)
                     }
                     val dayStart = calendar.timeInMillis
-                    viewModel.getExpensesForDay(dayStart).observe(viewLifecycleOwner) { expenses ->
-                        (recyclerView.adapter as ExpenseAdapter).updateData(expenses)
-                    }
+                    viewModel.getExpensesForDay(dayStart)
+                } catch (e: Exception) {
+                    null
                 }
-            } catch (e: Exception) {
             }
-        } else {
-            viewModel.allExpenses.observe(viewLifecycleOwner) { expenses ->
-                (recyclerView.adapter as ExpenseAdapter).updateData(expenses)
-            }
+            dateStr.isNotEmpty() -> viewModel.getExpensesForDay(getDayStart(dateStr))
+            category != "All" -> viewModel.getExpensesByCategory(category)
+            else -> viewModel.allExpenses
+        }
+
+        currentExpensesLiveData?.observe(viewLifecycleOwner) { expenses ->
+            val filteredExpenses = if (category != "All") expenses.filter { it.category == category } else expenses
+            (recyclerView.adapter as ExpenseAdapter).updateData(filteredExpenses)
         }
     }
 
-
-    private fun filterByCategory(category: String) {
-        if (category == "All") {
-            viewModel.allExpenses.observe(viewLifecycleOwner) { expenses ->
-                (recyclerView.adapter as ExpenseAdapter).updateData(expenses)
+    private fun getDayStart(dateStr: String): Long {
+        val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.US)
+        return try {
+            val date = sdf.parse(dateStr)?.time ?: 0L
+            val calendar = Calendar.getInstance().apply {
+                timeInMillis = date
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }
-        } else {
-            viewModel.getExpensesByCategory(category).observe(viewLifecycleOwner) { expenses ->
-                (recyclerView.adapter as ExpenseAdapter).updateData(expenses)
-            }
+            calendar.timeInMillis
+        } catch (e: Exception) {
+            0L
         }
     }
 

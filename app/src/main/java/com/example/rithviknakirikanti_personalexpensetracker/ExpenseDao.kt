@@ -23,4 +23,6 @@ interface ExpenseDao {
 
     @Query("SELECT * FROM expense WHERE category = :category ORDER BY date DESC")
     fun getExpensesByCategory(category: String): LiveData<List<Expense>>
+    @Query("SELECT * FROM Expense WHERE date = :date AND category LIKE :category")
+    fun getExpensesByDateAndCategory(date: Long, category: String): LiveData<List<Expense>>
 }

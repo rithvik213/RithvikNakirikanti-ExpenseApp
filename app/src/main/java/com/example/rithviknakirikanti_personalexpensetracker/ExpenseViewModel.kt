@@ -36,6 +36,10 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         return expenseDao.getExpensesForDay(dayStart, dayEnd)
     }
 
+    fun getExpensesByDateAndCategory(date: Long, category: String): LiveData<List<Expense>> {
+        return expenseDao.getExpensesByDateAndCategory(date, if (category == "All") "%" else category)
+    }
+
     fun getExpensesByCategory(category: String): LiveData<List<Expense>> {
         return expenseDao.getExpensesByCategory(category)
     }
