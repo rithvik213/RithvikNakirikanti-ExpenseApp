@@ -1,5 +1,6 @@
 package com.example.rithviknakirikanti_personalexpensetracker
 
+import ExpenseDao
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
