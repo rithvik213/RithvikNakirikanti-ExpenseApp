@@ -26,6 +26,12 @@ class ExpenseListFragment : Fragment() {
     private lateinit var dateEditText: EditText
     private lateinit var categorySpinner: Spinner
 
+    private val expensesObserver = androidx.lifecycle.Observer<List<Expense>> { expenses ->
+        val category = categorySpinner.selectedItem.toString()
+        val filteredExpenses = if (category != "All") expenses.filter { it.category == category } else expenses
+        (recyclerView.adapter as ExpenseAdapter).updateData(filteredExpenses.toMutableList())
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_expense_list, container, false)
 
@@ -36,11 +42,11 @@ class ExpenseListFragment : Fragment() {
 
         viewModel = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)).get(ExpenseViewModel::class.java)
 
-        viewModel.allExpenses.observe(viewLifecycleOwner) { expenses ->
-            recyclerView.adapter = ExpenseAdapter(expenses) { expense ->
-                navigateToAddEditExpenseFragment(expense)
-            }
+        recyclerView.adapter = ExpenseAdapter(mutableListOf()) { expense ->
+            navigateToAddEditExpenseFragment(expense)
         }
+
+        viewModel.allExpenses.observe(viewLifecycleOwner, expensesObserver)
 
         val fabAddExpense: FloatingActionButton = view.findViewById(R.id.fabAddExpense)
         fabAddExpense.setOnClickListener {
@@ -81,7 +87,6 @@ class ExpenseListFragment : Fragment() {
 
     private var currentExpensesLiveData: LiveData<List<Expense>>? = null
 
-
     private fun filterExpenses() {
         currentExpensesLiveData?.removeObservers(viewLifecycleOwner)
 
@@ -89,32 +94,12 @@ class ExpenseListFragment : Fragment() {
         val category = categorySpinner.selectedItem.toString()
 
         currentExpensesLiveData = when {
-            dateStr.isNotEmpty() && category != "All" -> {
-                val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.US)
-                try {
-                    val date = sdf.parse(dateStr)?.time ?: return
-                    val calendar = Calendar.getInstance().apply {
-                        timeInMillis = date
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    val dayStart = calendar.timeInMillis
-                    viewModel.getExpensesForDay(dayStart)
-                } catch (e: Exception) {
-                    null
-                }
-            }
             dateStr.isNotEmpty() -> viewModel.getExpensesForDay(getDayStart(dateStr))
             category != "All" -> viewModel.getExpensesByCategory(category)
             else -> viewModel.allExpenses
         }
 
-        currentExpensesLiveData?.observe(viewLifecycleOwner) { expenses ->
-            val filteredExpenses = if (category != "All") expenses.filter { it.category == category } else expenses
-            (recyclerView.adapter as ExpenseAdapter).updateData(filteredExpenses)
-        }
+        currentExpensesLiveData?.observe(viewLifecycleOwner, expensesObserver)
     }
 
     private fun getDayStart(dateStr: String): Long {
@@ -133,7 +118,6 @@ class ExpenseListFragment : Fragment() {
             0L
         }
     }
-
 
     private fun navigateToAddEditExpenseFragment(expense: Expense? = null) {
         val fragment = AddEditExpenseFragment().apply {

@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ExpenseAdapter(private var expenses: List<Expense>, private val onClick: (Expense) -> Unit) :
+class ExpenseAdapter(private var expenses: MutableList<Expense>, private val onClick: (Expense) -> Unit) :
     RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ExpenseViewHolder {
@@ -23,7 +23,8 @@ class ExpenseAdapter(private var expenses: List<Expense>, private val onClick: (
     override fun getItemCount(): Int = expenses.size
 
     fun updateData(newExpenses: List<Expense>) {
-        expenses = newExpenses
+        expenses.clear()
+        expenses.addAll(newExpenses)
         notifyDataSetChanged()
     }
 
@@ -35,7 +36,7 @@ class ExpenseAdapter(private var expenses: List<Expense>, private val onClick: (
         fun bind(expense: Expense) {
             val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
             dateTextView.text = sdf.format(Date(expense.date))
-            amountTextView.text = String.format("$%.2f", expense.amount)
+            amountTextView.text = itemView.context.getString(R.string.expense_amount_format, expense.amount)
             categoryTextView.text = expense.category
 
             itemView.setOnClickListener {

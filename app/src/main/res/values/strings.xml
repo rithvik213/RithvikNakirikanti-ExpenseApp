@@ -11,5 +11,5 @@
         <item>Automotive</item>
         <item>Misc</item>
     </string-array>
-
+    <string name="expense_amount_format">$%.2f</string>
 </resources>

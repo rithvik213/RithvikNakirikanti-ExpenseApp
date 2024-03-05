@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 
 
 @Dao
@@ -14,6 +15,9 @@ interface ExpenseDao {
 
     @Delete
     suspend fun delete(expense: Expense)
+
+    @Update
+    suspend fun update(expense: Expense)
 
     @Query("SELECT * FROM expense ORDER BY date DESC")
     fun getAllExpenses(): LiveData<List<Expense>>
